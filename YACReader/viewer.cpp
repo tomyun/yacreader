@@ -282,6 +282,16 @@ void Viewer::prev()
     updateInformation();
     shouldOpenNext = false;
 }
+
+void Viewer::random()
+{
+    direction = 1;
+    render->randomPage();
+    updateInformation();
+    shouldOpenPrevious = false;
+    shouldOpenNext = false;
+}
+
 void Viewer::showGoToDialog()
 {
     goToDialog->open();

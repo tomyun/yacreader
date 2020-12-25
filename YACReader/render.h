@@ -155,6 +155,7 @@ public slots:
     //--comic interface
     void nextPage();
     void previousPage();
+    void randomPage();
     void nextDoublePage();
     void previousDoublePage();
     void load(const QString &path, const ComicDB &comic);

@@ -121,6 +121,7 @@ private:
     QAction *openComicOnTheRightAction;
     QAction *goToPageOnTheRightAction;
     QAction *goToPageOnTheLeftAction;
+    QAction *randomAction;
     QAction *adjustWidthAction;
     QAction *adjustHeightAction;
     QAction *goToPageAction;

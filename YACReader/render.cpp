@@ -6,6 +6,7 @@
 #include <QPixmap>
 #include <QApplication>
 #include <QImage>
+#include <QRandomGenerator>
 
 #include <typeinfo>
 
@@ -838,6 +839,16 @@ void Render::previousDoublePage()
         update();
         emit pageChanged(currentIndex);
     }
+}
+
+void Render::randomPage()
+{
+    int randomIndex = QRandomGenerator::global()->bounded(1, (int)comic->numPages() - 2);
+    comic->setIndex(randomIndex);
+    previousIndex = currentIndex;
+    currentIndex = randomIndex;
+    update();
+    emit pageChanged(currentIndex);
 }
 
 unsigned int Render::getIndex()

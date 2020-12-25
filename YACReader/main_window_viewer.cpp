@@ -100,6 +100,7 @@ MainWindowViewer::~MainWindowViewer()
     delete openComicOnTheRightAction;
     delete goToPageOnTheLeftAction;
     delete goToPageOnTheRightAction;
+    delete randomAction;
     delete adjustHeightAction;
     delete adjustWidthAction;
     delete leftRotationAction;
@@ -302,6 +303,15 @@ void MainWindowViewer::createActions()
     goToPageOnTheRightAction->setData(NEXT_ACTION_Y);
     goToPageOnTheRightAction->setShortcut(ShortcutsManager::getShortcutsManager().getShortcut(NEXT_ACTION_Y));
     connect(goToPageOnTheRightAction, SIGNAL(triggered()), viewer, SLOT(right()));
+
+    randomAction = new QAction(tr("Random"), this);
+    randomAction->setIcon(QIcon(":/images/viewer_toolbar/help.png"));
+    randomAction->setShortcutContext(Qt::WidgetShortcut);
+    randomAction->setToolTip(tr("Go to random page"));
+    randomAction->setDisabled(true);
+    randomAction->setData(RANDOM_ACTION_Y);
+    randomAction->setShortcut(ShortcutsManager::getShortcutsManager().getShortcut(RANDOM_ACTION_Y));
+    connect(randomAction, SIGNAL(triggered()), viewer, SLOT(random()));
 
     adjustHeightAction = new QAction(tr("Fit Height"), this);
     adjustHeightAction->setIcon(QIcon(":/images/viewer_toolbar/toHeight.png"));
@@ -570,6 +580,7 @@ void MainWindowViewer::createToolBars()
 
     comicToolBar->addAction(goToPageOnTheLeftAction);
     comicToolBar->addAction(goToPageOnTheRightAction);
+    comicToolBar->addAction(randomAction);
     comicToolBar->addAction(goToPageAction);
 
     comicToolBar->addSeparator();
@@ -632,6 +643,7 @@ void MainWindowViewer::createToolBars()
 
     viewer->addAction(goToPageOnTheLeftAction);
     viewer->addAction(goToPageOnTheRightAction);
+    viewer->addAction(randomAction);
     viewer->addAction(goToPageAction);
     viewer->addAction(adjustHeightAction);
     viewer->addAction(adjustWidthAction);
@@ -719,6 +731,7 @@ void MainWindowViewer::createToolBars()
     auto goMenu = new QMenu(tr("Go"));
     goMenu->addAction(goToPageOnTheLeftAction);
     goMenu->addAction(goToPageOnTheRightAction);
+    goMenu->addAction(randomAction);
     goMenu->addAction(goToPageAction);
     goMenu->addSeparator();
     goMenu->addAction(setBookmarkAction);
@@ -981,6 +994,7 @@ void MainWindowViewer::enableActions()
     saveImageAction->setDisabled(false);
     goToPageOnTheLeftAction->setDisabled(false);
     goToPageOnTheRightAction->setDisabled(false);
+    randomAction->setDisabled(false);
     adjustHeightAction->setDisabled(false);
     adjustWidthAction->setDisabled(false);
     goToPageAction->setDisabled(false);
@@ -1013,6 +1027,7 @@ void MainWindowViewer::disableActions()
     saveImageAction->setDisabled(true);
     goToPageOnTheLeftAction->setDisabled(true);
     goToPageOnTheRightAction->setDisabled(true);
+    randomAction->setDisabled(true);
     adjustHeightAction->setDisabled(true);
     adjustWidthAction->setDisabled(true);
     goToPageAction->setDisabled(true);
@@ -1386,6 +1401,7 @@ void MainWindowViewer::setUpShortcutsManagement()
                                          tmpList = QList<QAction *>()
                                                  << goToPageOnTheRightAction
                                                  << goToPageOnTheLeftAction
+                                                 << randomAction
                                                  << setBookmarkAction
                                                  << showBookmarksAction
                                                  << autoScrollForwardAction

@@ -50,6 +50,7 @@ public slots:
     void next();
     void left();
     void right();
+    void random();
     void showGoToDialog();
     void goTo(unsigned int page);
     void updatePage();
