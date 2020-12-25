@@ -34,6 +34,7 @@
 #include <QImage>
 #include <QDate>
 #include <QMenuBar>
+#include <QRandomGenerator>
 
 /* TODO remove, no longer used
 #ifdef Q_OS_MAC
@@ -98,6 +99,7 @@ MainWindowViewer::~MainWindowViewer()
     delete saveImageAction;
     delete openComicOnTheLeftAction;
     delete openComicOnTheRightAction;
+    delete openRandomComicAction;
     delete goToPageOnTheLeftAction;
     delete goToPageOnTheRightAction;
     delete adjustHeightAction;
@@ -144,6 +146,7 @@ void MainWindowViewer::setupUI()
     connect(viewer, SIGNAL(openNextComic()), this, SLOT(openNextComic()));
     //detected start of comic
     connect(viewer, SIGNAL(openPreviousComic()), this, SLOT(openPreviousComic()));
+    connect(viewer, SIGNAL(openRandomComic()), this, SLOT(openRandomComic()));
 
     setCentralWidget(viewer);
     int heightDesktopResolution = QApplication::desktop()->screenGeometry().height();
@@ -284,6 +287,14 @@ void MainWindowViewer::createActions()
     openComicOnTheRightAction->setData(OPEN_NEXT_COMIC_ACTION_Y);
     openComicOnTheRightAction->setShortcut(ShortcutsManager::getShortcutsManager().getShortcut(OPEN_NEXT_COMIC_ACTION_Y));
     connect(openComicOnTheRightAction, &QAction::triggered, this, &MainWindowViewer::openRightComic);
+
+    openRandomComicAction = new QAction(tr("Random Comic"), this);
+    openRandomComicAction->setIcon(QIcon(":/images/viewer_toolbar/help.png"));
+    openRandomComicAction->setToolTip(tr("Open random comic"));
+    openRandomComicAction->setDisabled(true);
+    openRandomComicAction->setData(OPEN_RANDOM_COMIC_ACTION_Y);
+    openRandomComicAction->setShortcut(ShortcutsManager::getShortcutsManager().getShortcut(OPEN_RANDOM_COMIC_ACTION_Y));
+    connect(openRandomComicAction, SIGNAL(triggered()), this, SLOT(openRandomComic()));
 
     goToPageOnTheLeftAction = new QAction(tr("&Previous"), this);
     goToPageOnTheLeftAction->setIcon(QIcon(":/images/viewer_toolbar/previous.png"));
@@ -565,6 +576,7 @@ void MainWindowViewer::createToolBars()
     comicToolBar->addAction(saveImageAction);
     comicToolBar->addAction(openComicOnTheLeftAction);
     comicToolBar->addAction(openComicOnTheRightAction);
+    comicToolBar->addAction(openRandomComicAction);
 
     comicToolBar->addSeparator();
 
@@ -628,6 +640,7 @@ void MainWindowViewer::createToolBars()
     viewer->addAction(saveImageAction);
     viewer->addAction(openComicOnTheLeftAction);
     viewer->addAction(openComicOnTheRightAction);
+    viewer->addAction(openRandomComicAction);
     YACReader::addSperator(viewer);
 
     viewer->addAction(goToPageOnTheLeftAction);
@@ -849,6 +862,11 @@ void MainWindowViewer::open(QString path, ComicDB &comic, QList<ComicDB> &siblin
     updatePrevNextActions(index > 0, index + 1 < siblings.count());
 
     optionsDialog->setFilters(currentComicDB.info.brightness, currentComicDB.info.contrast, currentComicDB.info.gamma);
+
+    if (siblings.count() > 0)
+        openRandomComicAction->setDisabled(false);
+    else
+        openRandomComicAction->setDisabled(true);
 }
 
 void MainWindowViewer::open(QString path, qint64 comicId, qint64 libraryId)
@@ -1033,6 +1051,7 @@ void MainWindowViewer::disableActions()
     showInfoAction->setDisabled(true); //TODO enable goTo and showInfo (or update) when numPages emited
     openComicOnTheLeftAction->setDisabled(true);
     openComicOnTheRightAction->setDisabled(true);
+    openRandomComicAction->setDisabled(true);
     showDictionaryAction->setDisabled(true);
     showFlowAction->setDisabled(true);
 }
@@ -1231,9 +1250,11 @@ void MainWindowViewer::processReset()
         if (siblingComics.count() > 1) {
             bool openNextB = openComicOnTheRightAction->isEnabled();
             bool openPrevB = openComicOnTheLeftAction->isEnabled();
+            bool openRandomB = openRandomComicAction->isEnabled();
             disableActions();
             openComicOnTheRightAction->setEnabled(openNextB);
             openComicOnTheLeftAction->setEnabled(openPrevB);
+            openRandomComicAction->setEnabled(openRandomB);
         } else
             disableActions();
     } else
@@ -1254,7 +1275,8 @@ void MainWindowViewer::setUpShortcutsManagement()
                                                      openFolderAction,
                                                      saveImageAction,
                                                      openComicOnTheLeftAction,
-                                                     openComicOnTheRightAction });
+                                                     openComicOnTheRightAction,
+                                                     openRandomComicAction });
 
     allActions << tmpList;
 
@@ -1534,6 +1556,27 @@ void MainWindowViewer::openRightComic()
     }
 }
 
+void MainWindowViewer::openRandomComic()
+{
+    if (!siblingComics.isEmpty() && isClient) {
+        sendComic();
+
+        int currentIndex = siblingComics.indexOf(currentComicDB);
+        if (currentIndex == -1)
+            return;
+        if (currentIndex + 1 > 0 && currentIndex + 1 < siblingComics.count()) {
+            siblingComics[currentIndex] = currentComicDB; //updated
+            int randomIndex = QRandomGenerator::global()->bounded(siblingComics.count() - 1);
+            currentComicDB = siblingComics.at(randomIndex);
+            open(currentDirectory + currentComicDB.path, currentComicDB, siblingComics);
+        }
+        return;
+    }
+    if (!randomComicPath.isEmpty()) {
+        openSiblingComic(randomComicPath);
+    }
+}
+
 void MainWindowViewer::getSiblingComics(QString path, QString currentComic)
 {
     QDir d(path);
@@ -1585,7 +1628,7 @@ void MainWindowViewer::getSiblingComics(QString path, QString currentComic)
 		}*/
     }
 
-    previousComicPath = nextComicPath = "";
+    previousComicPath = nextComicPath = randomComicPath = "";
     if (index > 0) {
         previousComicPath = path + "/" + list.at(index - 1);
     }
@@ -1595,6 +1638,13 @@ void MainWindowViewer::getSiblingComics(QString path, QString currentComic)
     }
 
     updatePrevNextActions(index > 0, index + 1 < list.count());
+
+    if (list.count() > 0) {
+        int randomIndex = QRandomGenerator::global()->bounded(1, list.count());
+        randomComicPath = path + "/" + list.at(randomIndex - 1);
+        openRandomComicAction->setDisabled(false);
+    } else
+        openRandomComicAction->setDisabled(true);
 }
 
 void MainWindowViewer::dropEvent(QDropEvent *event)

@@ -52,6 +52,7 @@ public slots:
     void openNextComic();
     void openLeftComic();
     void openRightComic();
+    void openRandomComic();
     void openComicFromPath(QString pathFile);
     void openSiblingComic(QString pathFile);
     void openComic(QString pathFile);
@@ -119,6 +120,7 @@ private:
     QAction *saveImageAction;
     QAction *openComicOnTheLeftAction;
     QAction *openComicOnTheRightAction;
+    QAction *openRandomComicAction;
     QAction *goToPageOnTheRightAction;
     QAction *goToPageOnTheLeftAction;
     QAction *adjustWidthAction;
@@ -153,6 +155,7 @@ private:
     HttpVersionChecker *versionChecker;
     QString previousComicPath;
     QString nextComicPath;
+    QString randomComicPath;
     //! Método que inicializa el interfaz.
     void setupUI();
     void createActions();
